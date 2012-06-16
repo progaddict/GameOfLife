@@ -18,6 +18,13 @@ public interface ToroidalLifeField {
     public boolean isAlive(int x, int y);
 
     /**
+     * Get number of cells that are still alive.
+     * If there is no alive cells zero should be returned.
+     * @return number of alive cells.
+     */
+    public int getNumberOfAliveCells();
+
+    /**
      * Set cell (x;y) to alive state.
      * Coordinate limits:
      * 0 <= x < width of the field

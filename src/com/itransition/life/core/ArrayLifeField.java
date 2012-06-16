@@ -71,6 +71,11 @@ public class ArrayLifeField extends Observable implements ToroidalLifeField, Dig
     }
 
     @Override
+    public int getNumberOfAliveCells() {
+        return numberOfAliveCells;
+    }
+
+    @Override
     public void setAlive(int x, int y) {
         checkIfCellIsWithinBounds(x,y);
         int linearIndex = getLinearIndex(x,y);
@@ -118,7 +123,7 @@ public class ArrayLifeField extends Observable implements ToroidalLifeField, Dig
     }
 
     private void checkIfCellIsWithinBounds(int x, int y) {
-        if(!isCellWithinBounds(x, y)) {
+        if(!isCellWithinBounds(x,y)) {
             String errorMessage = "wrong cell coordinates: x = " + x + "   y = " + y;
             logger.error(errorMessage);
             throw new IllegalArgumentException(errorMessage);

@@ -6,11 +6,13 @@ import org.apache.commons.logging.LogFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Observable;
+import java.util.Properties;
 
 /**
  * Life field implementation in which array is used to store the state.
  * It extends Observable and therefore informs its registered observers
  * that its state has changed (after setAlive and setDead operations).
+ * @see java.util.Observer.
  */
 public class ArrayLifeField extends Observable implements ToroidalLifeField, Digestable {
     private static final Log logger = LogFactory.getLog(ArrayLifeField.class);
@@ -85,7 +87,8 @@ public class ArrayLifeField extends Observable implements ToroidalLifeField, Dig
         }
         field[linearIndex] = ALIVE;
         numberOfAliveCells++;
-        notifyObservers();
+        Properties changes = getOneCellChanges(x,y);
+        notifyObservers(changes);
         logger.info("cell (" + x + ";" + y + ") is now alive. notified observers.");
     }
 
@@ -99,7 +102,8 @@ public class ArrayLifeField extends Observable implements ToroidalLifeField, Dig
         }
         field[linearIndex] = DEAD;
         numberOfAliveCells--;
-        notifyObservers();
+        Properties changes = getOneCellChanges(x,y);
+        notifyObservers(changes);
         logger.info("cell (" + x + ";" + y + ") is now dead. notified observers.");
     }
 
@@ -115,7 +119,70 @@ public class ArrayLifeField extends Observable implements ToroidalLifeField, Dig
 
     @Override
     public void nextGeneration() {
-        //To change body of implemented methods use File | Settings | File Templates.
+        if(getNumberOfAliveCells() == 0) {
+            logger.info("tried to compute next generation but no cells are alive!");
+            return;
+        }
+        byte[] neighboursCount = getNeighboursCount();
+        for(int i=0; i<neighboursCount.length; i++) {
+            field[i] = getNextState(field[i], neighboursCount[i]);
+        }
+        Properties changes = getWholeFieldChanges();
+        notifyObservers(changes);
+        logger.info("next generation has been computed. observers were notified.");
+    }
+
+    private byte getNextState(byte currentState, byte neighboursCount) {
+        switch (currentState) {
+            case ALIVE: {
+                // under-population.
+                if(neighboursCount < 2) {
+                    return DEAD;
+                }
+                // continues to live.
+                if(neighboursCount == 2 || neighboursCount == 3) {
+                    return ALIVE;
+                }
+                // overcrowding
+                if(neighboursCount > 3) {
+                    return DEAD;
+                }
+            }
+            case DEAD: {
+                if(neighboursCount == 3) {
+                    return ALIVE;
+                }
+                else {
+                    return DEAD;
+                }
+            }
+        }
+        logger.error("wrong state! current state = " + currentState);
+        return DEAD;
+    }
+
+    private byte[] getNeighboursCount() {
+        final int[] MOVE_X = { -1, -1, -1, +0, +0, +1, +1, +1 };
+        final int[] MOVE_Y = { -1, +0, +1, -1, +1, -1, +0, +1 };
+        final int NEIGHBOURS_COUNT = MOVE_X.length;
+        final int WIDTH = getWidth();
+        final int HEIGHT = getHeight();
+        byte[] neighbours = new byte[WIDTH*HEIGHT];
+        for(int x=0; x<WIDTH; x++) {
+            for(int y=0; y<HEIGHT; y++) {
+                byte aliveNeighboursCount = 0;
+                for(int move=0; move<NEIGHBOURS_COUNT; move++) {
+                    int neighbourX = (WIDTH + x + MOVE_X[move]) % WIDTH;
+                    int neighbourY = (HEIGHT + y + MOVE_Y[move]) % HEIGHT;
+                    if(isAlive(neighbourX,neighbourY)) {
+                        aliveNeighboursCount++;
+                    }
+                }
+                int linearIndex = getLinearIndex(x,y);
+                neighbours[linearIndex] = aliveNeighboursCount;
+            }
+        }
+        return neighbours;
     }
 
     private int getLinearIndex(int x, int y) {
@@ -140,5 +207,19 @@ public class ArrayLifeField extends Observable implements ToroidalLifeField, Dig
 
     private boolean isYWithinBounds(int y) {
         return 0 <= y && y < getHeight();
+    }
+
+    private static Properties getOneCellChanges(int x, int y) {
+        Properties changes = new Properties();
+        changes.setProperty("whatChanged","cell");
+        changes.setProperty("x",Integer.toString(x));
+        changes.setProperty("y",Integer.toString(y));
+        return changes;
+    }
+
+    private static Properties getWholeFieldChanges() {
+        Properties changes = new Properties();
+        changes.setProperty("whatChanged","field");
+        return changes;
     }
 }

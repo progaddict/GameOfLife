@@ -1,14 +1,13 @@
 package com.itransition.life.test;
 
 import com.itransition.life.core.ArrayLifeField;
-import java.util.Arrays;
-import java.util.Collection;
+
+import java.util.*;
 
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-
 
 @RunWith(value = Parameterized.class)
 public class ArrayLifeFieldTestCellStates {
@@ -30,7 +29,9 @@ public class ArrayLifeFieldTestCellStates {
                 { 2, 5, new int[][] {{1,1},{0,0},{1,4}} },
                 { 10, 10, new int[][] {{1,1},{0,0},{1,4},{9,9},{3,7},{2,1}} },
                 { 120, 120, new int[][] {{1,1},{0,0},{1,4},{9,9},{3,7},{2,1},{119,119},{100,100},{37,98}} },
-                { 5, 12, new int[][] {{1,1},{0,0},{1,4},{4,9},{3,7},{2,1},{3,11},{1,10},{3,8}} }
+                { 5, 12, new int[][] {{1,1},{0,0},{1,4},{4,9},{3,7},{2,1},{3,11},{1,10},{3,8}} },
+                { 2, 2, new int[][] {{0,0},{1,0},{1,1},{0,1}} },
+                { 4, 6, new int[][] {{1,1},{0,0},{3,5},{1,2},{2,1},{2,5},{3,1},{3,3},{0,5}} }
         };
         return Arrays.asList(data);
     }
@@ -84,10 +85,4 @@ public class ArrayLifeFieldTestCellStates {
             Assert.assertEquals(i,field.getNumberOfAliveCells());
         }
     }
-
-    @Test
-    public void testObservers() throws Exception {
-        // TODO use mock-observers (mockito)
-    }
-
 }

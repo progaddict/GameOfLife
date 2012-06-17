@@ -124,8 +124,12 @@ public class ArrayLifeField extends Observable implements ToroidalLifeField, Dig
             return;
         }
         byte[] neighboursCount = getNeighboursCount();
+        numberOfAliveCells = 0;
         for(int i=0; i<neighboursCount.length; i++) {
             field[i] = getNextState(field[i], neighboursCount[i]);
+            if(field[i] == ALIVE) {
+                numberOfAliveCells++;
+            }
         }
         Properties changes = getWholeFieldChanges();
         notifyObservers(changes);

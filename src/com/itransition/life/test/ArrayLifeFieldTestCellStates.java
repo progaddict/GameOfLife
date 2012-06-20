@@ -38,12 +38,12 @@ public class ArrayLifeFieldTestCellStates {
 
     @Test
     public void testSetAlive() throws Exception {
-        ArrayLifeField field = new ArrayLifeField(width,height);
-        for(int i=0; i<cellsToTest.length; i++) {
+        ArrayLifeField field = new ArrayLifeField(width, height);
+        for(int i = 0; i < cellsToTest.length; i++) {
             int x = cellsToTest[i][0];
             int y = cellsToTest[i][1];
-            field.setAlive(x,y);
-            Assert.assertTrue(field.isAlive(x,y));
+            field.setState(x, y, true);
+            Assert.assertTrue(field.isAlive(x, y));
         }
     }
 
@@ -53,7 +53,7 @@ public class ArrayLifeFieldTestCellStates {
         for(int i=0; i<cellsToTest.length; i++) {
             int x = cellsToTest[i][0];
             int y = cellsToTest[i][1];
-            field.setDead(x,y);
+            field.setState(x, y, false);
             Assert.assertFalse(field.isAlive(x,y));
         }
     }
@@ -64,7 +64,7 @@ public class ArrayLifeFieldTestCellStates {
         for(int i=0; i<cellsToTest.length; i++) {
             int x = cellsToTest[i][0];
             int y = cellsToTest[i][1];
-            field.setAlive(x,y);
+            field.setState(x, y, true);
         }
         Assert.assertEquals(cellsToTest.length,field.getNumberOfAliveCells());
     }
@@ -75,13 +75,13 @@ public class ArrayLifeFieldTestCellStates {
         for(int i=0; i<cellsToTest.length; i++) {
             int x = cellsToTest[i][0];
             int y = cellsToTest[i][1];
-            field.setAlive(x,y);
+            field.setState(x, y, true);
             Assert.assertEquals(i+1,field.getNumberOfAliveCells());
         }
         for(int i=cellsToTest.length-1; i>=0; i--) {
             int x = cellsToTest[i][0];
             int y = cellsToTest[i][1];
-            field.setDead(x,y);
+            field.setState(x, y, false);
             Assert.assertEquals(i,field.getNumberOfAliveCells());
         }
     }

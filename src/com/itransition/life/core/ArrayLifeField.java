@@ -10,15 +10,16 @@ import java.util.Properties;
 
 /**
  * Life field implementation in which array is used to store the state.
- * It extends Observable and therefore informs its registered observers
- * that its state has changed (after setAlive and setDead operations).
- * @see java.util.Observer.
+ * It informs its registered observers that its state has changed
+ * (after setState operation).
+ * @see{java.util.Observer}.
  */
 public class ArrayLifeField extends Observable implements ToroidalLifeField, Digestable {
-    private static final Log logger = LogFactory.getLog(ArrayLifeField.class);
-    private static MessageDigest md;
+    private static final Log LOGGER = LogFactory.getLog(ArrayLifeField.class);
     private static final byte ALIVE = 1;
     private static final byte DEAD = 0;
+    private static final String HASHING_ALGORITHM = "SHA-256";
+    private static MessageDigest md;
     private final int width;
     private final int height;
     private final byte[] field;
@@ -30,10 +31,11 @@ public class ArrayLifeField extends Observable implements ToroidalLifeField, Dig
 
     private static void initializeStaticFields() {
         try {
-            md = MessageDigest.getInstance("SHA-256");
+            md = MessageDigest.getInstance(HASHING_ALGORITHM);
         }
         catch (NoSuchAlgorithmException trouble) {
-            // Do nothing because there is SHA256 algorithm.
+            LOGGER.error("can't find hashing algorithm " + HASHING_ALGORITHM, trouble);
+            // Do nothing: algorithm should exist.
         }
     }
 
@@ -44,19 +46,14 @@ public class ArrayLifeField extends Observable implements ToroidalLifeField, Dig
      * @param height height of the field in cells.
      */
     public ArrayLifeField(int width, int height) {
-        if (width <= 0) {
-            String errorMessage = "wrong width! width = " + width + ".";
-            logger.error(errorMessage);
-            throw new IllegalArgumentException(errorMessage);
-        }
-        if (height <= 0) {
-            String errorMessage = "wrong height! height = " + height + ".";
-            logger.error(errorMessage);
+        if (width <= 0 || height <= 0) {
+            String errorMessage = "wrong field size! width = " + width + "   height = " + height + ".";
+            LOGGER.error(errorMessage);
             throw new IllegalArgumentException(errorMessage);
         }
         this.width = width;
         this.height = height;
-        this.field = new byte[width*height];
+        this.field = new byte[width * height];
         this.numberOfAliveCells = 0;
     }
 
@@ -67,8 +64,11 @@ public class ArrayLifeField extends Observable implements ToroidalLifeField, Dig
 
     @Override
     public boolean isAlive(int x, int y) {
-        checkIfCellIsWithinBounds(x,y);
-        int linearIndex = getLinearIndex(x,y);
+        int linearIndex = getLinearIndex(x, y);
+        return isAlive(linearIndex);
+    }
+
+    private boolean isAlive(int linearIndex) {
         return field[linearIndex] == ALIVE;
     }
 
@@ -78,33 +78,23 @@ public class ArrayLifeField extends Observable implements ToroidalLifeField, Dig
     }
 
     @Override
-    public void setAlive(int x, int y) {
-        checkIfCellIsWithinBounds(x,y);
-        int linearIndex = getLinearIndex(x,y);
-        if (field[linearIndex] == ALIVE) {
-            logger.info("cell (" + x + ";" + y + ") is already alive.");
+    public void setState(int x, int y, boolean state) {
+        final byte NEW_STATE = state ? ALIVE : DEAD;
+        int linearIndex = getLinearIndex(x, y);
+        if (field[linearIndex] == NEW_STATE) {
+            LOGGER.info("cell (" + x + ";" + y + ") is already in the right state.");
             return;
         }
-        field[linearIndex] = ALIVE;
-        numberOfAliveCells++;
-        Properties changes = getOneCellChanges(x,y);
-        notifyObservers(changes);
-        logger.info("cell (" + x + ";" + y + ") is now alive. notified observers.");
-    }
-
-    @Override
-    public void setDead(int x, int y) {
-        checkIfCellIsWithinBounds(x,y);
-        int linearIndex = getLinearIndex(x,y);
-        if (field[linearIndex] == DEAD) {
-            logger.info("cell (" + x + ";" + y + ") is already dead.");
-            return;
+        field[linearIndex] = NEW_STATE;
+        if (state) {
+            numberOfAliveCells++;
         }
-        field[linearIndex] = DEAD;
-        numberOfAliveCells--;
-        Properties changes = getOneCellChanges(x,y);
+        else {
+            numberOfAliveCells--;
+        }
+        Properties changes = getOneCellChanges(x, y);
         notifyObservers(changes);
-        logger.info("cell (" + x + ";" + y + ") is now dead. notified observers.");
+        LOGGER.info("cell (" + x + ";" + y + ") has changed to new state. notified observers.");
     }
 
     @Override
@@ -119,111 +109,94 @@ public class ArrayLifeField extends Observable implements ToroidalLifeField, Dig
 
     @Override
     public void nextGeneration() {
-        if(getNumberOfAliveCells() == 0) {
-            logger.info("tried to compute next generation but no cells are alive!");
+        if (getNumberOfAliveCells() == 0) {
+            LOGGER.info("tried to compute next generation but no cells are alive!");
             return;
         }
         byte[] neighboursCount = getNeighboursCount();
         numberOfAliveCells = 0;
-        for(int i=0; i<neighboursCount.length; i++) {
+        for (int i = 0; i < neighboursCount.length; i++) {
             field[i] = getNextState(field[i], neighboursCount[i]);
-            if(field[i] == ALIVE) {
+            if (isAlive(i)) {
                 numberOfAliveCells++;
             }
         }
         Properties changes = getWholeFieldChanges();
         notifyObservers(changes);
-        logger.info("next generation has been computed. observers were notified.");
+        LOGGER.info("next generation has been computed. observers were notified.");
     }
 
     private byte getNextState(byte currentState, byte neighboursCount) {
         switch (currentState) {
             case ALIVE: {
-                // under-population.
-                if(neighboursCount < 2) {
-                    return DEAD;
-                }
-                // continues to live.
-                if(neighboursCount == 2 || neighboursCount == 3) {
-                    return ALIVE;
-                }
-                // overcrowding
-                if(neighboursCount > 3) {
-                    return DEAD;
-                }
+                return handleAliveCell(neighboursCount);
             }
             case DEAD: {
-                if(neighboursCount == 3) {
-                    return ALIVE;
-                }
-                else {
-                    return DEAD;
-                }
+                return handleDeadCell(neighboursCount);
             }
         }
-        logger.error("wrong state! current state = " + currentState);
+        LOGGER.error("wrong state! current state = " + currentState);
+        return DEAD;
+    }
+
+    private byte handleAliveCell(int neighboursCount) {
+        if(neighboursCount < 2) {
+            return DEAD;
+        }
+        if(neighboursCount == 2 || neighboursCount == 3) {
+            return ALIVE;
+        }
+        return DEAD;
+    }
+
+    private byte handleDeadCell(int neighboursCount) {
+        if(neighboursCount == 3) {
+            return ALIVE;
+        }
         return DEAD;
     }
 
     private byte[] getNeighboursCount() {
-        final int[] MOVE_X = { -1, -1, -1, +0, +0, +1, +1, +1 };
-        final int[] MOVE_Y = { -1, +0, +1, -1, +1, -1, +0, +1 };
-        final int NEIGHBOURS_COUNT = MOVE_X.length;
-        final int WIDTH = getWidth();
-        final int HEIGHT = getHeight();
-        byte[] neighbours = new byte[WIDTH*HEIGHT];
-        for(int x=0; x<WIDTH; x++) {
-            for(int y=0; y<HEIGHT; y++) {
-                byte aliveNeighboursCount = 0;
-                for(int move=0; move<NEIGHBOURS_COUNT; move++) {
-                    int neighbourX = (WIDTH + x + MOVE_X[move]) % WIDTH;
-                    int neighbourY = (HEIGHT + y + MOVE_Y[move]) % HEIGHT;
-                    if(isAlive(neighbourX,neighbourY)) {
-                        aliveNeighboursCount++;
-                    }
-                }
-                int linearIndex = getLinearIndex(x,y);
+        byte[] neighbours = new byte[getWidth() * getHeight()];
+        for (int x = 0; x < getWidth(); x++) {
+            for (int y = 0; y < getHeight(); y++) {
+                byte aliveNeighboursCount = getNumberOfAliveNeighbours(x, y);
+                int linearIndex = getLinearIndex(x, y);
                 neighbours[linearIndex] = aliveNeighboursCount;
             }
         }
         return neighbours;
     }
 
-    private int getLinearIndex(int x, int y) {
-        return y*getWidth() + x;
-    }
-
-    private void checkIfCellIsWithinBounds(int x, int y) {
-        if(!isCellWithinBounds(x,y)) {
-            String errorMessage = "wrong cell coordinates: x = " + x + "   y = " + y;
-            logger.error(errorMessage);
-            throw new IllegalArgumentException(errorMessage);
+    private byte getNumberOfAliveNeighbours(int x, int y) {
+        final int[] MOVE_X = { -1, -1, -1, +0, +0, +1, +1, +1 };
+        final int[] MOVE_Y = { -1, +0, +1, -1, +1, -1, +0, +1 };
+        byte aliveNeighboursCount = 0;
+        for (int move = 0; move < MOVE_X.length; move++) {
+            int neighbourX = (getWidth() + x + MOVE_X[move]) % getWidth();
+            int neighbourY = (getHeight() + y + MOVE_Y[move]) % getHeight();
+            if (isAlive(neighbourX, neighbourY)) {
+                aliveNeighboursCount++;
+            }
         }
+        return aliveNeighboursCount;
     }
 
-    private boolean isCellWithinBounds(int x, int y) {
-        return isXWithinBounds(x) && isYWithinBounds(y);
-    }
-
-    private boolean isXWithinBounds(int x) {
-        return 0 <= x && x < getWidth();
-    }
-
-    private boolean isYWithinBounds(int y) {
-        return 0 <= y && y < getHeight();
+    private int getLinearIndex(int x, int y) {
+        return y * getWidth() + x;
     }
 
     private static Properties getOneCellChanges(int x, int y) {
         Properties changes = new Properties();
-        changes.setProperty("whatChanged","cell");
-        changes.setProperty("x",Integer.toString(x));
-        changes.setProperty("y",Integer.toString(y));
+        changes.setProperty("whatChanged", "cell");
+        changes.setProperty("x", Integer.toString(x));
+        changes.setProperty("y", Integer.toString(y));
         return changes;
     }
 
     private static Properties getWholeFieldChanges() {
         Properties changes = new Properties();
-        changes.setProperty("whatChanged","field");
+        changes.setProperty("whatChanged", "field");
         return changes;
     }
 }

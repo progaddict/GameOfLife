@@ -1,12 +1,15 @@
 package com.itransition.life.gui;
 
 import com.itransition.life.core.ArrayLifeField;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class MainForm {
+    private static final Log logger = LogFactory.getLog(MainForm.class);
     private JPanel mainPanel;
     private JPanel interactionPanel;
     private JPanel createPanel;
@@ -76,6 +79,11 @@ public class MainForm {
     }
 
     private void createUIComponents() {
-        this.lifeFieldRenderer = new LifeFieldRenderer( new ArrayLifeField(10,10) );
+        ArrayLifeField field = new ArrayLifeField(20,20);
+        field.setState(0, 0, true);
+        field.setState(0, 5, true);
+        field.setState(5, 0, true);
+        field.setState(2, 7, true);
+        this.lifeFieldRenderer = new ToroidalLifeFieldRenderer( field );
     }
 }

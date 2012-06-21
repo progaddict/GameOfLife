@@ -75,7 +75,7 @@ public class LifeGameController implements DigestableToroidalLifeField {
      */
     public void createNewGame(int width, int height) {
         pauseGame();
-        lifeField = new ArrayLifeField(width, height);
+        lifeField = new MapLifeField(width, height);
         resetFields();
         setGameState(GameState.UPDATED);
     }

@@ -22,8 +22,8 @@ public class ArrayLifeFieldTestSize {
     @Parameters
     public static Collection<Object[]> data() {
         Object[][] data = new Object[][] {
-                {1,1}, {2,5}, {10,10}, {120,120}, {5,10},
-                {7,5}, {10,22}, {33,80}, {1,100}, {100,1},
+                {3,3}, {3,5}, {10,10}, {120,120}, {5,10},
+                {7,5}, {10,22}, {33,80}, {3,100}, {100,3},
                 {17,99}, {99,99}, {100,100}, {120,10}, {17,18}
         };
         return Arrays.asList(data);

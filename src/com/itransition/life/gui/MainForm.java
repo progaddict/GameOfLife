@@ -1,15 +1,25 @@
 package com.itransition.life.gui;
 
-import com.itransition.life.core.ArrayLifeField;
+import com.itransition.life.core.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Observable;
+import java.util.Observer;
 
-public class MainForm {
-    private static final Log logger = LogFactory.getLog(MainForm.class);
+/**
+ * Main form of the application.
+ */
+public class MainForm implements ActionListener {
+    private static final Log LOGGER = LogFactory.getLog(MainForm.class);
+    private static final int MINIMAL_FIELD_WIDTH = 5;
+    private static final int MINIMAL_FIELD_HEIGHT = 5;
+    private static final int DEFAULT_FIELD_WIDTH = 20;
+    private static final int DEFAULT_FIELD_HEIGHT = 20;
+    private static final int REPAINT_TIMER_DELAY_SEC = 1;
     private JPanel mainPanel;
     private JPanel interactionPanel;
     private JPanel createPanel;
@@ -31,32 +41,58 @@ public class MainForm {
     private JLabel heightLabel;
     private JPanel lifeGameFieldPanel;
     private JPanel lifeFieldRenderer;
+    private Timer timer = new Timer(REPAINT_TIMER_DELAY_SEC*1000, this);
+    private LifeGameController gameController;
 
     public MainForm() {
         createButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //To change body of implemented methods use File | Settings | File Templates.
+                createNewField();
             }
         });
         goButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //To change body of implemented methods use File | Settings | File Templates.
+                startGame();
             }
         });
         pauseButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //To change body of implemented methods use File | Settings | File Templates.
+                pauseGame();
             }
         });
         clearButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //To change body of implemented methods use File | Settings | File Templates.
+                clearField();
             }
         });
+        LOGGER.info("main form has been constructed.");
+    }
+
+    private void clearField() {
+        final int WIDTH = gameController.getWidth();
+        final int HEIGHT = gameController.getHeight();
+        gameController.pauseGame();
+        gameController.createNewGame(WIDTH, HEIGHT);
+        lifeFieldRenderer.repaint();
+        generationLabel.setText("");
+        periodLabel.setText("");
+        populationLabel.setText("");
+    }
+
+    private void pauseGame() {
+        gameController.pauseGame();
+        timer.stop();
+        pauseButton.setEnabled(false);
+    }
+
+    private void startGame() {
+        gameController.startOrResumeGame();
+        timer.start();
+        pauseButton.setEnabled(true);
     }
 
     public static void main(String[] args) {
@@ -79,11 +115,79 @@ public class MainForm {
     }
 
     private void createUIComponents() {
-        ArrayLifeField field = new ArrayLifeField(20,20);
-        field.setState(0, 0, true);
-        field.setState(0, 5, true);
-        field.setState(5, 0, true);
-        field.setState(2, 7, true);
-        this.lifeFieldRenderer = new ToroidalLifeFieldRenderer( field );
+        gameController = new LifeGameController();
+        gameController.createNewGame(DEFAULT_FIELD_WIDTH, DEFAULT_FIELD_HEIGHT);
+        lifeFieldRenderer = new ToroidalLifeFieldRenderer(gameController);
+    }
+
+    private void createNewField() {
+        gameController.pauseGame();
+        timer.stop();
+        int width = getUsefSelectedFieldWidthOrCorrentIt();
+        int height = getUsefSelectedFieldHeightOrCorrentIt();
+        gameController.createNewGame(width, height);
+        lifeFieldRenderer.repaint();
+        generationLabel.setText("");
+        periodLabel.setText("");
+        populationLabel.setText("");
+    }
+
+    private int getUsefSelectedFieldHeightOrCorrentIt() {
+        int height = DEFAULT_FIELD_HEIGHT;
+        try {
+            height = Integer.parseInt(heightTextField.getText());
+            if (height < MINIMAL_FIELD_HEIGHT) {
+                height = MINIMAL_FIELD_HEIGHT;
+            }
+        }
+        catch (NumberFormatException trouble) {
+            if (gameController != null) {
+                height = gameController.getHeight();
+            }
+        }
+        heightTextField.setText(Integer.toString(height));
+        return height;
+    }
+
+    private int getUsefSelectedFieldWidthOrCorrentIt() {
+        int width = DEFAULT_FIELD_WIDTH;
+        try {
+            width = Integer.parseInt(widthTextField.getText());
+            if (width < MINIMAL_FIELD_WIDTH) {
+                width = MINIMAL_FIELD_WIDTH;
+            }
+        }
+        catch (NumberFormatException trouble) {
+            if (gameController != null) {
+                width = gameController.getWidth();
+            }
+        }
+        widthTextField.setText(Integer.toString(width));
+        return width;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        lifeFieldRenderer.repaint();
+        periodLabel.setText(getCycleLength());
+        generationLabel.setText(getCurrentGeneration());
+        populationLabel.setText(getCurrentPopulation());
+    }
+
+    private String getCurrentPopulation() {
+        return Integer.toString(((ToroidalLifeFieldRenderer)lifeFieldRenderer).getNumberOfAliveCells());
+    }
+
+    private String getCurrentGeneration() {
+        return Long.toString(gameController.getCurrentGeneration());
+    }
+
+    private String getCycleLength() {
+        long cycleLength = gameController.getCycleLength();
+        if (cycleLength == 0) {
+            return "";
+        }
+        timer.stop();
+        return Long.toString(cycleLength);
     }
 }

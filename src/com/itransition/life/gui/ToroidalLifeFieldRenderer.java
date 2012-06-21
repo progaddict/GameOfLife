@@ -1,6 +1,6 @@
 package com.itransition.life.gui;
 
-import com.itransition.life.core.ToroidalLifeField;
+import com.itransition.life.core.DigestableToroidalLifeField;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -13,21 +13,27 @@ import java.awt.event.MouseListener;
  * Canvas on which life field is rendered.
  */
 public class ToroidalLifeFieldRenderer extends JPanel implements MouseListener {
-    private static final Log logger = LogFactory.getLog(ToroidalLifeFieldRenderer.class);
+    private static final Log LOGGER = LogFactory.getLog(ToroidalLifeFieldRenderer.class);
     private static final Color ALIVE_COLOR = Color.GREEN;
     private static final Color DEAD_COLOR = Color.GRAY;
     private static final Color LINE_COLOR = Color.BLACK;
-    private ToroidalLifeField lifeField;
+    private boolean isLifeFieldLocked = false;
+    private DigestableToroidalLifeField lifeField;
     private Graphics2D canvas;
+    private int numberOfAliveCells;
 
-    public ToroidalLifeFieldRenderer(ToroidalLifeField lifeField) {
+    public ToroidalLifeFieldRenderer(DigestableToroidalLifeField lifeField) {
         if( lifeField.getWidth() < 2 || lifeField.getHeight() < 2 ) {
             String errorMessage = "wrong field size! width = " + lifeField.getWidth() + "   height = " + lifeField.getHeight() + ".";
-            logger.error(errorMessage);
+            LOGGER.error(errorMessage);
             throw new IllegalArgumentException(errorMessage);
         }
         this.lifeField = lifeField;
         this.addMouseListener(this);
+    }
+
+    public int getNumberOfAliveCells() {
+        return numberOfAliveCells;
     }
 
     @Override
@@ -37,14 +43,14 @@ public class ToroidalLifeFieldRenderer extends JPanel implements MouseListener {
         canvas = (Graphics2D)g;
         paintAliveCells();
         paintLines();
-        logger.info("painted life field.");
+        LOGGER.info("painted life field.");
     }
 
     private void paintLines() {
         canvas.setColor(LINE_COLOR);
         paintHorizontalLines();
         paintVerticalLines();
-        logger.info("painted lines.");
+        LOGGER.info("painted lines.");
     }
 
 
@@ -70,14 +76,16 @@ public class ToroidalLifeFieldRenderer extends JPanel implements MouseListener {
 
     private void paintAliveCells() {
         canvas.setColor(ALIVE_COLOR);
+        numberOfAliveCells = 0;
         for (int x = 0; x < lifeField.getWidth(); x++) {
             for (int y = 0; y < lifeField.getHeight(); y++) {
                 if (lifeField.isAlive(x, y)) {
                     paintAliveCell(x, y);
+                    numberOfAliveCells++;
                 }
             }
         }
-        logger.info("painted alive cells.");
+        LOGGER.info("painted alive cells.");
     }
 
     private void paintAliveCell(int x, int y) {
@@ -100,11 +108,15 @@ public class ToroidalLifeFieldRenderer extends JPanel implements MouseListener {
 
     @Override
     public void mouseClicked(MouseEvent e) {
+        if (!(lifeField instanceof DigestableToroidalLifeField)) {
+            return;
+        }
+        DigestableToroidalLifeField editableLifeField = (DigestableToroidalLifeField) lifeField;
         Point cursor = e.getPoint();
         int x = convertCanvasXToFieldX(cursor.x);
         int y = convertCanvasYToFieldY(cursor.y);
         boolean currentState = lifeField.isAlive(x, y);
-        lifeField.setState(x, y, !currentState);
+        editableLifeField.setState(x, y, !currentState);
         repaint();
     }
 
@@ -134,5 +146,13 @@ public class ToroidalLifeFieldRenderer extends JPanel implements MouseListener {
 
     private int convertCanvasYToFieldY(int canvasY) {
         return (canvasY * lifeField.getHeight()) / getHeight();
+    }
+
+    public boolean isLifeFieldLocked() {
+        return isLifeFieldLocked;
+    }
+
+    public void setLifeFieldLocked(boolean lifeFieldLocked) {
+        isLifeFieldLocked = lifeFieldLocked;
     }
 }

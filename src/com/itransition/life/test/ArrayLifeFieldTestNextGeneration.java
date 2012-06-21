@@ -52,7 +52,6 @@ public class ArrayLifeFieldTestNextGeneration {
         for(int i=0; i<epochCount; i++) {
             field.nextGeneration();
         }
-        Assert.assertEquals(finalCells.length,field.getNumberOfAliveCells());
         for(int i=0; i<finalCells.length; i++) {
             int x = finalCells[i][0];
             int y = finalCells[i][1];

@@ -14,8 +14,10 @@ import java.util.Properties;
  * (after setState operation).
  * @see{java.util.Observer}.
  */
-public class ArrayLifeField extends Observable implements ToroidalLifeField, Digestable {
+public class ArrayLifeField extends Observable implements DigestableToroidalLifeField {
     private static final Log LOGGER = LogFactory.getLog(ArrayLifeField.class);
+    private static final int MINIMAL_WIDTH = 3;
+    private static final int MINIMAL_HEIGHT = 3;
     private static final byte ALIVE = 1;
     private static final byte DEAD = 0;
     private static final String HASHING_ALGORITHM = "SHA-256";
@@ -46,8 +48,10 @@ public class ArrayLifeField extends Observable implements ToroidalLifeField, Dig
      * @param height height of the field in cells.
      */
     public ArrayLifeField(int width, int height) {
-        if (width <= 0 || height <= 0) {
-            String errorMessage = "wrong field size! width = " + width + "   height = " + height + ".";
+        if (width < MINIMAL_WIDTH || height < MINIMAL_HEIGHT) {
+            String errorMessage = "wrong field size! width = " + width + "   height = " + height
+                    + ". minimal width is " + MINIMAL_WIDTH
+                    + " and minimal height is " + MINIMAL_HEIGHT + ".";
             LOGGER.error(errorMessage);
             throw new IllegalArgumentException(errorMessage);
         }
@@ -72,8 +76,7 @@ public class ArrayLifeField extends Observable implements ToroidalLifeField, Dig
         return field[linearIndex] == ALIVE;
     }
 
-    @Override
-    public int getNumberOfAliveCells() {
+    private int getNumberOfAliveCells() {
         return numberOfAliveCells;
     }
 

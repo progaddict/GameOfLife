@@ -6,7 +6,7 @@ import org.apache.commons.logging.LogFactory;
 public class LifeGameController implements DigestableToroidalLifeField {
     private static final Log LOGGER = LogFactory.getLog(LifeGameController.class);
     private static final long MAXIMAL_NUMBER_OF_GENERATIONS = 1234567890l;
-    private static final String GAME_THREAD_NAME = "LifeThread";
+    private static final String GAME_THREAD_NAME = "LifeGameThread";
     private GameState gameState = GameState.UNDEFINED;
     private DigestableToroidalLifeField lifeField = null;
     private StackCycleDetector cycleDetector = null;

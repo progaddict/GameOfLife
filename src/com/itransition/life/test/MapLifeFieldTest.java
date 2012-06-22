@@ -60,4 +60,23 @@ public class MapLifeFieldTest {
             Assert.assertTrue(field.isAlive(x,y));
         }
     }
+
+    @Test
+    public void testHash() throws Exception {
+        MapLifeField fieldA = new MapLifeField(width, height);
+        for (int i = 0; i < initialCells.length; i++) {
+            int x = initialCells[i][0];
+            int y = initialCells[i][1];
+            fieldA.setState(x, y, true);
+        }
+        MapLifeField fieldB = new MapLifeField(width, height);
+        for(int i = initialCells.length-1; i >= 0; i--) {
+            int x = initialCells[i][0];
+            int y = initialCells[i][1];
+            fieldB.setState(x, y, true);
+        }
+        byte[] digestA = fieldA.getDigest();
+        byte[] digestB = fieldB.getDigest();
+        Assert.assertArrayEquals(digestA, digestB);
+    }
 }

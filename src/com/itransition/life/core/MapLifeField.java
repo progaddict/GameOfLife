@@ -14,11 +14,29 @@ public class MapLifeField implements DigestableToroidalLifeField {
     private static final int MINIMAL_WIDTH = 3;
     private static final int MINIMAL_HEIGHT = 3;
     private static final String HASHING_ALGORITHM = "SHA-256";
+    private static final Comparator<Point> POINT_COMPARATOR = new Comparator<Point>() {
+        @Override
+        public int compare(Point a, Point b) {
+            if (a.x < b.x) {
+                return -1;
+            }
+            if (a.x > b.x) {
+                return +1;
+            }
+            if (a.y < b.y) {
+                return -1;
+            }
+            if (a.y > b.y) {
+                return +1;
+            }
+            return 0;
+        }
+    };
     private static MessageDigest md;
     private final int width;
     private final int height;
-    Set<Point> aliveCells;
-    Set<Point> survivedAndNewCells;
+    private Set<Point> aliveCells;
+    private Set<Point> survivedAndNewCells;
 
     static {
         initializeStaticFields();
@@ -62,16 +80,17 @@ public class MapLifeField implements DigestableToroidalLifeField {
     }
 
     private byte[] getByteRepresentation() {
+        Point[] aliveCellsArray = aliveCells.toArray(new Point[0]);
+        Arrays.sort(aliveCellsArray, POINT_COMPARATOR);
         byte[] coordinatesStackedTogether = new byte[2 * aliveCells.size()];
         int coordinateIndex = 0;
-        Iterator<Point> iterator = aliveCells.iterator();
-        while (iterator.hasNext()) {
-            Point point = iterator.next();
+        for (Point point : aliveCellsArray) {
             coordinatesStackedTogether[coordinateIndex] = (byte)point.x;
             coordinateIndex++;
             coordinatesStackedTogether[coordinateIndex] = (byte)point.y;
             coordinateIndex++;
         }
+        LOGGER.info("calculated byte representation: " + Arrays.toString(coordinatesStackedTogether));
         return coordinatesStackedTogether;
     }
 

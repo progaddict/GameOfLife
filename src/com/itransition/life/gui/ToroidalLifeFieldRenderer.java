@@ -11,6 +11,7 @@ import java.awt.event.MouseListener;
 
 /**
  * Canvas on which life field is rendered.
+ * @see DigestableToroidalLifeField
  */
 public class ToroidalLifeFieldRenderer extends JPanel implements MouseListener {
     private static final Log LOGGER = LogFactory.getLog(ToroidalLifeFieldRenderer.class);
@@ -22,20 +23,31 @@ public class ToroidalLifeFieldRenderer extends JPanel implements MouseListener {
     private Graphics2D canvas;
     private int numberOfAliveCells;
 
+    /**
+     * Create new renderer for a life field.
+     * @param lifeField life field to render.
+     */
     public ToroidalLifeFieldRenderer(DigestableToroidalLifeField lifeField) {
-        if( lifeField.getWidth() < 2 || lifeField.getHeight() < 2 ) {
-            String errorMessage = "wrong field size! width = " + lifeField.getWidth() + "   height = " + lifeField.getHeight() + ".";
-            LOGGER.error(errorMessage);
-            throw new IllegalArgumentException(errorMessage);
-        }
         this.lifeField = lifeField;
         this.addMouseListener(this);
     }
 
+    /**
+     * Get number of alive cells (current population).
+     * @return number of alive cells on the field.
+     */
     public int getNumberOfAliveCells() {
         return numberOfAliveCells;
     }
 
+    /**
+     * Overriding this method is a standard way to create
+     * you own canvas with black jack and hookers.
+     * First of all component is filled with the color of dead cells.
+     * Then alive cells are rendered.
+     * And finally lines are drawn.
+     * @see JPanel#paintComponent(java.awt.Graphics).
+     */
     @Override
     protected void paintComponent(Graphics g) {
         setBackground(DEAD_COLOR);
@@ -106,6 +118,10 @@ public class ToroidalLifeFieldRenderer extends JPanel implements MouseListener {
         return (int) Math.round(canvasY);
     }
 
+    /**
+     * When user clicks a mouse the cell should change its state.
+     * @param e mouse event. contains pointer coordinates used to calculate cell to change.
+     */
     @Override
     public void mouseClicked(MouseEvent e) {
         if (!(lifeField instanceof DigestableToroidalLifeField)) {
@@ -120,21 +136,33 @@ public class ToroidalLifeFieldRenderer extends JPanel implements MouseListener {
         repaint();
     }
 
+    /**
+     * Does nothing.
+     */
     @Override
     public void mousePressed(MouseEvent e) {
         // Do nothing.
     }
 
+    /**
+     * Does nothing.
+     */
     @Override
     public void mouseReleased(MouseEvent e) {
         // Do nothing.
     }
 
+    /**
+     * Does nothing.
+     */
     @Override
     public void mouseEntered(MouseEvent e) {
         // Do nothing.
     }
 
+    /**
+     * Does nothing.
+     */
     @Override
     public void mouseExited(MouseEvent e) {
         // Do nothing.
@@ -146,13 +174,5 @@ public class ToroidalLifeFieldRenderer extends JPanel implements MouseListener {
 
     private int convertCanvasYToFieldY(int canvasY) {
         return (canvasY * lifeField.getHeight()) / getHeight();
-    }
-
-    public boolean isLifeFieldLocked() {
-        return isLifeFieldLocked;
-    }
-
-    public void setLifeFieldLocked(boolean lifeFieldLocked) {
-        isLifeFieldLocked = lifeFieldLocked;
     }
 }

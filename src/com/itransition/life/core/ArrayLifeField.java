@@ -10,17 +10,20 @@ import java.util.Properties;
 
 /**
  * Life field implementation in which array is used to store the state.
- * It informs its registered observers that its state has changed
- * (after setState operation).
- * @see{java.util.Observer}.
  */
-public class ArrayLifeField extends Observable implements DigestableToroidalLifeField {
+public class ArrayLifeField implements DigestableToroidalLifeField {
+    /**
+     * Minimal width of the field in cells.
+     */
+    public static final int MINIMAL_WIDTH = 3;
+    /**
+     * Minimal height of the field in cells.
+     */
+    public static final int MINIMAL_HEIGHT = 3;
+    private static final String HASHING_ALGORITHM = "SHA-256";
     private static final Log LOGGER = LogFactory.getLog(ArrayLifeField.class);
-    private static final int MINIMAL_WIDTH = 3;
-    private static final int MINIMAL_HEIGHT = 3;
     private static final byte ALIVE = 1;
     private static final byte DEAD = 0;
-    private static final String HASHING_ALGORITHM = "SHA-256";
     private static MessageDigest md;
     private final int width;
     private final int height;
@@ -44,8 +47,10 @@ public class ArrayLifeField extends Observable implements DigestableToroidalLife
     /**
      * Create new life field of the specified size.
      * Size of the field is immutable, but state of the cells can be changed.
+     * Width should be at least MINIMAL_WIDTH and height should be at least MINIMAL_HEIGHT.
      * @param width width of the field in cells.
      * @param height height of the field in cells.
+     * @throws IllegalAccessException if either width or height is too small.
      */
     public ArrayLifeField(int width, int height) {
         if (width < MINIMAL_WIDTH || height < MINIMAL_HEIGHT) {
@@ -61,11 +66,17 @@ public class ArrayLifeField extends Observable implements DigestableToroidalLife
         this.numberOfAliveCells = 0;
     }
 
+    /**
+     * @see com.itransition.life.core.DigestableToroidalLifeField#getDigest().
+     */
     @Override
     public byte[] getDigest() {
         return md.digest(field);
     }
 
+    /**
+     * @see DigestableToroidalLifeField#isAlive(int, int).
+     */
     @Override
     public boolean isAlive(int x, int y) {
         int linearIndex = getLinearIndex(x, y);
@@ -80,6 +91,9 @@ public class ArrayLifeField extends Observable implements DigestableToroidalLife
         return numberOfAliveCells;
     }
 
+    /**
+     * @see DigestableToroidalLifeField#setState(int, int, boolean).
+     */
     @Override
     public void setState(int x, int y, boolean state) {
         final byte NEW_STATE = state ? ALIVE : DEAD;
@@ -95,21 +109,29 @@ public class ArrayLifeField extends Observable implements DigestableToroidalLife
         else {
             numberOfAliveCells--;
         }
-        Properties changes = getOneCellChanges(x, y);
-        notifyObservers(changes);
         LOGGER.info("cell (" + x + ";" + y + ") has changed to new state. notified observers.");
     }
 
+    /**
+     * @see com.itransition.life.core.DigestableToroidalLifeField#getWidth().
+     */
     @Override
     public int getWidth() {
         return width;
     }
 
+    /**
+     * @see com.itransition.life.core.DigestableToroidalLifeField#getHeight().
+     */
     @Override
     public int getHeight() {
         return height;
     }
 
+
+    /**
+     * @see com.itransition.life.core.DigestableToroidalLifeField#nextGeneration().
+     */
     @Override
     public void nextGeneration() {
         if (getNumberOfAliveCells() == 0) {
@@ -124,8 +146,6 @@ public class ArrayLifeField extends Observable implements DigestableToroidalLife
                 numberOfAliveCells++;
             }
         }
-        Properties changes = getWholeFieldChanges();
-        notifyObservers(changes);
         LOGGER.info("next generation has been computed. observers were notified.");
     }
 
@@ -187,19 +207,5 @@ public class ArrayLifeField extends Observable implements DigestableToroidalLife
 
     private int getLinearIndex(int x, int y) {
         return y * getWidth() + x;
-    }
-
-    private static Properties getOneCellChanges(int x, int y) {
-        Properties changes = new Properties();
-        changes.setProperty("whatChanged", "cell");
-        changes.setProperty("x", Integer.toString(x));
-        changes.setProperty("y", Integer.toString(y));
-        return changes;
-    }
-
-    private static Properties getWholeFieldChanges() {
-        Properties changes = new Properties();
-        changes.setProperty("whatChanged", "field");
-        return changes;
     }
 }

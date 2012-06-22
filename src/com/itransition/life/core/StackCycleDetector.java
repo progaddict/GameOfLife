@@ -6,15 +6,20 @@ import org.apache.commons.logging.LogFactory;
 import java.util.*;
 
 /**
- * Notifies its observers when a cycle is found and has length at least 2.
+ * Cycle detector implementing stack cycle detection algorithm.
+ * Note: up to 2 full cycles might be required to detect the cycle length.
+ * @see{http://www.gabrielnivasch.org/fun/cycle-detection}
  */
-public class StackCycleDetector extends Observable implements DigestCycleDetector {
-    private static final Log logger = LogFactory.getLog(StackCycleDetector.class);
+public class StackCycleDetector implements DigestCycleDetector {
+    private static final Log LOGGER = LogFactory.getLog(StackCycleDetector.class);
     private long currentStep = 0;
     private Stack<byte[]> hashStack = new Stack<byte[]>();
     private Stack<Long> stepStack = new Stack<Long>();
     private long cycleLength = 0;
 
+    /**
+     * @see com.itransition.life.core.DigestCycleDetector#getCycleLength().
+     */
     @Override
     public long getCycleLength() {
         return cycleLength;
@@ -22,11 +27,13 @@ public class StackCycleDetector extends Observable implements DigestCycleDetecto
 
     /**
      * If cycle has been already found it does nothing.
-     * @param digest message digest of fixed length such as MD5 or SHA.
+     * Do not add different digests that differ in length!
+     * @param digest message digest of fixed length such as MD5 or SHA-256.
+     * @see DigestCycleDetector#addDigest(byte[]).
      */
     @Override
     public void addDigest(byte[] digest) {
-        if(cycleLength > 0) {
+        if (cycleLength > 0) {
             return;
         }
         currentStep++;
@@ -41,7 +48,6 @@ public class StackCycleDetector extends Observable implements DigestCycleDetecto
             int compareResult = compareHashes(lastHash,digest);
             if (compareResult == 0) {
                 cycleLength = currentStep - lastStep;
-                notifyObservers(cycleLength);
                 return;
             }
             if (compareResult < 0) {
@@ -56,10 +62,10 @@ public class StackCycleDetector extends Observable implements DigestCycleDetecto
     
     private static int compareHashes(byte[] hashA, byte[] hashB) {
         for (int i=0; i<hashA.length; i++) {
-            if(hashA[i] < hashB[i]) {
+            if (hashA[i] < hashB[i]) {
                 return -1;
             }
-            if(hashA[i] > hashB[i]) {
+            if (hashA[i] > hashB[i]) {
                 return +1;
             }
         }

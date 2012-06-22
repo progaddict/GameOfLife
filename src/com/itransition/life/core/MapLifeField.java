@@ -9,10 +9,19 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
+/**
+ * Life field implementation in which map is used to store alive cells.
+ */
 public class MapLifeField implements DigestableToroidalLifeField {
+    /**
+     * Minimal width of the field in cells.
+     */
+    public static final int MINIMAL_WIDTH = 3;
+    /**
+     * Minimal height of the field in cells.
+     */
+    public static final int MINIMAL_HEIGHT = 3;
     private static final Log LOGGER = LogFactory.getLog(MapLifeField.class);
-    private static final int MINIMAL_WIDTH = 3;
-    private static final int MINIMAL_HEIGHT = 3;
     private static final String HASHING_ALGORITHM = "SHA-256";
     private static final Comparator<Point> POINT_COMPARATOR = new Comparator<Point>() {
         @Override
@@ -55,8 +64,10 @@ public class MapLifeField implements DigestableToroidalLifeField {
     /**
      * Create new life field of the specified size.
      * Size of the field is immutable, but state of the cells can be changed.
+     * Width should be at least MINIMAL_WIDTH and height should be at least MINIMAL_HEIGHT.
      * @param width width of the field in cells.
      * @param height height of the field in cells.
+     * @throws IllegalAccessException if either width or height is too small.
      */
     public MapLifeField(int width, int height) {
         if (width < MINIMAL_WIDTH || height < MINIMAL_HEIGHT) {
@@ -68,9 +79,12 @@ public class MapLifeField implements DigestableToroidalLifeField {
         }
         this.width = width;
         this.height = height;
-        this.aliveCells = new HashSet<Point>( width * height / 2 );
+        this.aliveCells = new HashSet<Point>(width * height / 2);
     }
 
+    /**
+     * @see com.itransition.life.core.DigestableToroidalLifeField#getDigest().
+     */
     @Override
     public byte[] getDigest() {
         if (aliveCells.size() == 0) {
@@ -94,6 +108,9 @@ public class MapLifeField implements DigestableToroidalLifeField {
         return coordinatesStackedTogether;
     }
 
+    /**
+     * @see DigestableToroidalLifeField#isAlive(int, int).
+     */
     @Override
     public boolean isAlive(int x, int y) {
         return aliveCells.contains(new Point(x, y));
@@ -107,6 +124,9 @@ public class MapLifeField implements DigestableToroidalLifeField {
         return aliveCells.size();
     }
 
+    /**
+     * @see DigestableToroidalLifeField#setState(int, int, boolean).
+     */
     @Override
     public void setState(int x, int y, boolean state) {
         Point point = new Point(x, y);
@@ -117,16 +137,25 @@ public class MapLifeField implements DigestableToroidalLifeField {
         aliveCells.remove(point);
     }
 
+    /**
+     * @see com.itransition.life.core.DigestableToroidalLifeField#getWidth().
+     */
     @Override
     public int getWidth() {
         return width;
     }
 
+    /**
+     * @see com.itransition.life.core.DigestableToroidalLifeField#getHeight().
+     */
     @Override
     public int getHeight() {
         return height;
     }
 
+    /**
+     * @see com.itransition.life.core.DigestableToroidalLifeField#nextGeneration().
+     */
     @Override
     public void nextGeneration() {
         if (getNumberOfAliveCells() == 0) {

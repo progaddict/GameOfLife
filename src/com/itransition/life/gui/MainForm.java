@@ -7,8 +7,6 @@ import org.apache.commons.logging.LogFactory;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Observable;
-import java.util.Observer;
 
 /**
  * Main form of the application.
@@ -44,6 +42,9 @@ public class MainForm implements ActionListener {
     private Timer timer = new Timer(REPAINT_TIMER_DELAY_SEC*1000, this);
     private LifeGameController gameController;
 
+    /**
+     * ActionListeners are attached here.
+     */
     public MainForm() {
         createButton.addActionListener(new ActionListener() {
             @Override
@@ -95,6 +96,10 @@ public class MainForm implements ActionListener {
         pauseButton.setEnabled(true);
     }
 
+    /**
+     * Entry point of the application.
+     * Creates GUI and shows it.
+     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(
                 new Runnable() {
@@ -166,6 +171,9 @@ public class MainForm implements ActionListener {
         return width;
     }
 
+    /**
+     * When timer goes off life field is repainted here.
+     */
     @Override
     public void actionPerformed(ActionEvent e) {
         lifeFieldRenderer.repaint();

@@ -1,8 +1,9 @@
 package com.itransition.life.core;
 
 /**
- * Interface of the toroidal field, i.e. the bottom of the field is linked with
- * its top and its left side is linked with its right side.
+ * Interface of the toroidal life field which can compute digest of its internal state.
+ * The bottom of the field is linked with its top and its left side is linked with its right side.
+ * Fields with equal states should have the same digests.
  */
 public interface DigestableToroidalLifeField {
     /**
@@ -10,18 +11,19 @@ public interface DigestableToroidalLifeField {
      * Coordinate limits:
      * 0 <= x < width of the field
      * 0 <= y < height of the field
-     * Throws java.lang.IllegalArgumentException if either x or y is out of limits.
-     * Returns true if the cell is alive and false otherwise.
+     * @return true if the cell is alive and false otherwise.
      */
     public boolean isAlive(int x, int y);
 
     /**
      * Get the field's width in cells.
+     * @return width of the field in cells.
      */
     public int getWidth();
 
     /**
      * Get the field's height in cells.
+     * @return height of the field in cells.
      */
     public int getHeight();
 
@@ -30,7 +32,6 @@ public interface DigestableToroidalLifeField {
      * Coordinate limits:
      * 0 <= x < width of the field
      * 0 <= y < height of the field
-     * Should throw java.lang.IllegalArgumentException if either x or y is out of limits.
      * @param state true for alive cells and false for dead ones.
      */
     public void setState(int x, int y, boolean state);
@@ -42,7 +43,9 @@ public interface DigestableToroidalLifeField {
     public void nextGeneration();
 
     /**
-     * Get digest of the field.
+     * Compute digest according to the field's internal state. Fields with equal states should have
+     * the same digest. Length of the digest depends on the digest algorithm used in computation.
+     * Field of the same class should have the same fixed digest length.
      * @return digest of some fixed length (depending on the algorithm).
      */
     public byte[] getDigest();

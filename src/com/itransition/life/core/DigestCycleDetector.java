@@ -1,7 +1,8 @@
 package com.itransition.life.core;
 
 /**
- * Digest cycle detection interface.
+ * Digest cycle detection interface. Helps detect cycles in sequences of any objects that can
+ * provide their digest.
  */
 public interface DigestCycleDetector {
     /**
@@ -12,8 +13,8 @@ public interface DigestCycleDetector {
 
     /**
      * Add digest to existing sequence of digests.
-     * @param digest message digest of fixed length such as MD5 or SHA
-     * @see java.security.MessageDigest
+     * @param digest message digest of fixed length such as MD5 or SHA-256.
+     * @see java.security.MessageDigest.
      */
     public void addDigest(byte[] digest);
 }
